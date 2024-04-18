@@ -6,20 +6,19 @@ from aiogram.filters import Command, CommandObject, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from datetime import datetime
-from bot import bot
 
-from models import printCategory, addIncome
+from models import printCategory, addOutcome
 
 router = Router()
 
-class incomeRegister(StatesGroup):
+class OutcomeRegister(StatesGroup):
     description_transaction= State()
     date_transaction = State()
     volume_transaction = State()
     category_transaction = State()
 
-@router.message(Command("income"))
-async def cmd_income(
+@router.message(Command("outcome"))
+async def cmd_outcome(
         message: Message,
         command: CommandObject,
         state: FSMContext
@@ -27,7 +26,7 @@ async def cmd_income(
     builder = InlineKeyboardBuilder()
 
     if command.args is None:
-        await state.set_state(incomeRegister.description_transaction)
+        await state.set_state(OutcomeRegister.description_transaction)
 
     try:
         volume, date, description = command.args.split(" ", maxsplit=2)
@@ -37,7 +36,7 @@ async def cmd_income(
     except ValueError:
         await message.answer(
             "Ошибка: неправильный формат команды. Пример:\n"
-            "/income <volume> <DD.MM.YYYY> <description>"
+            "/outcome <volume> <DD.MM.YYYY> <description>"
         )
         await state.clear()
         return
@@ -46,31 +45,30 @@ async def cmd_income(
 
     if len(categories) == 0:
         await message.answer(
-            "Список категорий пуст, доход не будет добавлен. Сначала добавьте категорию"
+            "Список категорий пуст, расход не будет добавлен. Сначала добавьте категорию"
         )
         await state.clear()
     else:
         for category in categories:
                 builder.add(InlineKeyboardButton(
                     text=category.name,
-                    callback_data=f'choiceIncome_{category.name}')
+                    callback_data=f'choiceOutcome_{category.name}')
                 )
         await message.answer(text="Выберите категорию",
             reply_markup=builder.as_markup()
         )
 
-    await state.set_state(incomeRegister.description_transaction)
+    await state.set_state(OutcomeRegister.description_transaction)
     await state.update_data(description=description, date=date, volume=volume)
-    await state.set_state(incomeRegister.category_transaction)
+    await state.set_state(OutcomeRegister.category_transaction)
 
-@router.callback_query(F.data.startswith("choiceIncome_"))
-async def delete_income_category_callback(callback: CallbackQuery, state: FSMContext):
-    await bot.delete_message(chat_id=callback.message.chat.id, message_id=callback.message.message_id)
+@router.callback_query(F.data.startswith("choiceOutcome_"))
+async def delete_outcome_category_callback(callback: CallbackQuery, state: FSMContext):
     category = callback.data.split("_")[1]
     await state.update_data(category=category)
     await callback.message.answer(
         f"Транзакция зарегистрирована"
     )
     data = await state.get_data()
-    addIncome(description=data['description'], date=data['date'], volume=data['volume'], category=data['category'])
+    addOutcome(description=data['description'], date=data['date'], volume=data['volume'], category=data['category'])
     await state.clear()

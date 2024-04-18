@@ -2,7 +2,11 @@ from sqlalchemy import create_engine
 from sqlalchemy import Column, Integer, ForeignKey, Numeric, DateTime, String, VARCHAR
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import Session
+from enum import Enum
 
+class TypeTransaction(Enum):
+    INCOME = 0
+    OUTCOME = 1
 
 Base = declarative_base()
 engine = create_engine('sqlite:///budget.db')
@@ -20,7 +24,6 @@ class Category(Base):
     __tablename__ = 'CATEGORY'
     id = Column(Integer, primary_key=True)
     name = Column(VARCHAR(100))
-    description = Column(VARCHAR(10000))
 
 
 class Transaction(Base):
@@ -31,6 +34,7 @@ class Transaction(Base):
     account = Column(Integer, ForeignKey(Person.id))
     volume = Column(Numeric)
     category = Column(Integer, ForeignKey(Category.id))
+    type_transaction = Column(Integer)
 
 class Account(Base):
     __tablename__ = 'ACCOUNT'
@@ -54,8 +58,36 @@ class Debt(Base):
 
 
 Base.metadata.create_all(engine)
-# session = Session(engine)
 
+def addCategory(name: str):
+    session = Session(engine)
+    category = Category(name=name)
+    session.add(category)
+    session.commit()
+
+def printCategory():
+    session = Session(engine)
+    categories = session.query(Category).all()
+    return categories
+
+def delCategory(name):
+    session = Session(engine)
+    category_to_delete = session.query(Category).filter_by(name=name).first()
+    session.delete(category_to_delete)
+    session.commit()
+
+
+def addIncome(description: str, date, volume, category):
+    session = Session(engine)
+    transaction = Transaction(description=description, date=date, volume=volume, category=category, type_transaction=TypeTransaction.INCOME.value)
+    session.add(transaction)
+    session.commit()
+
+def addOutcome(description: str, date, volume, category):
+    session = Session(engine)
+    transaction = Transaction(description=description, date=date, volume=volume, category=category, type_transaction=TypeTransaction.OUTCOME.value)
+    session.add(transaction)
+    session.commit()
 # person = Person(username='person1', last_name="PERSON", first_name='Person', patronymic='PeRsOn', description='text text text')
 # session.add(person)
 # session.commit()
