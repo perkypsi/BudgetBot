@@ -1,7 +1,7 @@
 from functools import wraps
 from aiogram import types
 
-CHATS = [463762417]
+CHATS = []
 
 def check_chat_id(chat_ids):
     def decorator(func):

@@ -11,9 +11,10 @@ from person import person
 from aiogram.fsm.context import FSMContext
 from utils import check_chat_id, CHATS
 
-
 router = Router()
 bot = Bot(token=config.bot_token.get_secret_value())
+CHATS += config.chat_ids
+
 @router.message(Command("cancel"))
 @check_chat_id(CHATS)
 async def cmd_cancel(message: types.Message, state: FSMContext):
