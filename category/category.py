@@ -6,6 +6,7 @@ from aiogram.filters import Command, CommandObject, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from datetime import datetime
+from utils import check_chat_id, CHATS
 
 from models import addCategory, printCategory, delCategory
 
@@ -16,6 +17,7 @@ class AddCategory(StatesGroup):
     final = State()
 
 @router.message(Command("addCategory"))
+@check_chat_id(CHATS)
 async def cmd_income(
         message: Message,
         command: CommandObject,
@@ -28,6 +30,7 @@ async def cmd_income(
     await state.set_state(AddCategory.name)
 
 @router.message(AddCategory.name)
+@check_chat_id(CHATS)
 async def chosen_account(message: Message, state: FSMContext):
     addCategory(message.text)
     await message.answer(
@@ -36,6 +39,7 @@ async def chosen_account(message: Message, state: FSMContext):
     await state.clear()
 
 @router.message(Command("printCategory"))
+@check_chat_id(CHATS)
 async def printCategories(message: Message):
     
     categories = printCategory()
@@ -49,6 +53,7 @@ async def printCategories(message: Message):
         )
 
 @router.message(Command("delCategory"))
+@check_chat_id(CHATS)
 async def deleteCategory(message: Message):
     builder = InlineKeyboardBuilder()
     categories = printCategory()
